@@ -1,21 +1,90 @@
-const urlBase = "https://api.punkapi.com/v2/beers"
+const urlBase = "https://api.punkapi.com/v2/beers?page="
+const filterABV = document.getElementById("filterABV")
+const filterIBU = document.getElementById("filterIBU")
+const pageText = document.getElementById("pageNumber");
+const prevPage = document.getElementById("prevPage");
+const nextPage = document.getElementById("nextPage");
+let optionsABV = ""
+let optionsIBU = ""
+let page = 1
+// filter for abv
+filterABV.addEventListener("change", event => {
+  //to check value
+  const value = event.target.value;
 
+  switch (value) {
+    case "all":
+      optionsABV = "";
+      break
+    case "weak":
+      optionsABV = "&abv_lt=4.6";
+      break
+    case "medium":
+      optionsABV = "&abv_gt=4.5&abv_lt=7.6";
+      break
+    case "strong":
+      optionsABV = "&abv_gt=7.5";
+      break
+  }
+  page = 1
+  getBeers()
+})
+
+// filte for ibu
+filterIBU.addEventListener("change", event => {
+  const value = event.target.value;
+
+  switch (value) {
+    case "all":
+      optionsIBU = "";
+      break
+    case "weak":
+      optionsIBU = "&ibu_lt=35";
+      break
+    case "medium":
+      optionsIBU = "&ibu_gt=34&ibu_lt=75";
+      break
+    case "strong":
+      optionsIBU = "&ibu_gt=74";
+      break
+  }
+  page = 1
+  getBeers();
+});
 // Create an async function called "getBeers"
 
 async function getBeers() {
-  const beerPromise = await fetch(urlBase)
+  const url = urlBase + page + optionsABV + optionsIBU;
+  console.log(url)
+
+  const beerPromise = await fetch(url)
 
   const beerData = await beerPromise.json()
   console.log(beerData)
+
+  //pegination
+  pageText.innerText = page;
+
+  if (page === 1) {
+    prevPage.disabled = true;
+  } else {
+    prevPage.disabled = false;
+  }
+  if (beerData.length < 25) {
+    nextPage.disabled = true;
+  } else {
+    nextPage.disabled = false;
+  }
   //render data
   const beers = document.querySelector('.beers')
   let beerHtml = ""
+  const genericBottle = 'https://cdn.pixabay.com/photo/2014/12/22/00/04/bottle-576717_960_720.png'
 
   beerData.forEach(beer => {
     beerHtml += `
       <div class='beer-wrapper card'>
         <div class='beer'>
-          <img class='beer__img' src="${beer.image_url}">
+          <img class='beer__img' src="${beer.image_url ? beer.image_url : genericBottle}">
             <h3>${beer.name}</h3>
               <span class='beer__info'>
                 <span>ABV: ${beer.abv}%</span>
@@ -35,6 +104,16 @@ async function getBeers() {
   })
   beers.innerHTML = beerHtml
 }
+//pagination
 
+prevPage.addEventListener('click', () => {
+  page--
+  getBeers()
+})
+
+nextPage.addEventListener('click', () => {
+  page++
+  getBeers()
+})
 
 getBeers()
